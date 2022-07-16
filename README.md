@@ -83,6 +83,10 @@ transaction(myNewNumber: Int) {
 1. array
 <img src="image3.png" height="200" />
 
+2.
+<img src="image4.png" height="200" />
+
+3. 
 
 
 ## Day 4 

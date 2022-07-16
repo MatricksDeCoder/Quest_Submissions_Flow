@@ -40,7 +40,7 @@ pub fun main()  {
 }
 
 ```
-<img src="./image1" />
+![Screenshot Read is](image1.png)
 
 
 ## Day 2 

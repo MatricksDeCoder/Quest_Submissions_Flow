@@ -42,6 +42,9 @@ pub fun main()  {
 ```
 ![Screenshot Read is](image1.png)
 
+----
+<img src="image1.png" height="100" />
+
 
 ## Day 2 
 

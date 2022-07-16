@@ -38,15 +38,46 @@ import JacobTucker from 0x03
 pub fun main()  {
     log(JacobTucker.is)
 }
-
-```
-![Screenshot Read is](image1.png)
-
-----
+---------------------
 <img src="image1.png" height="200" />
 
 
 ## Day 2 
+
+1. scripts <- cant change data in the account on blockchain 
+2. AuthAccount <- gives details about who is authorising and allows for access of data in the account 
+3. prepare <- can access data in account and call functions on smart contract: execute <- can only call functions 
+```
+pub contract HelloWorld {
+
+    pub var greeting: String
+    pub var myNumber: Int
+
+    pub fun changeGreeting(newGreeting: String) {
+        self.greeting = newGreeting
+    }
+
+    pub fun updateMyNumber(newNumber: Int) {
+        self.myNumber = newNumber
+    }
+
+    init() {
+        self.greeting = "Hello, World!"
+        self.myNumber = 0
+    }
+}
+--------------------------------
+import HelloWorld from 0x01
+
+transaction(myNewNumber: Int) {
+    prepare(account: AuthAccount) {}
+    execute{
+        HelloWorld.updateMyNumber(newNumber: myNewNumber)
+    }
+}
+```
+<img src="image2.png" height="200" />
+
 
 ## Day 3 
 

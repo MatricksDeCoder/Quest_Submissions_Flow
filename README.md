@@ -17,7 +17,7 @@
 
 ## Day 1 
 
-1. Deploy contract + Read
+Deploy contract + Read
 ```
 access(all) contract JacobTucker {
 
@@ -30,13 +30,8 @@ access(all) contract JacobTucker {
   init() {
       self.is = "the best"
   }
-
-  // Public function that returns our friendly greeting!
-  access(all) fun readIs(): String {
-      return self.is
-  }
+  
 }
-
 ------------------
 import JacobTucker from 0x03
 
@@ -45,8 +40,6 @@ pub fun main()  {
 }
 
 ```
-
-2. 
 
 
 ## Day 2 

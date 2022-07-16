@@ -40,7 +40,7 @@ pub fun main()  {
 }
 
 ```
-<img src="image1" />
+<img src="./image1" />
 
 
 ## Day 2 

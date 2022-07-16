@@ -41,7 +41,6 @@ pub fun main()  {
 ```
 <img src="image1.png" height="200" />
 
-
 ## Day 2 
 
 1. scripts <- cant change data in the account on blockchain 
@@ -80,5 +79,10 @@ transaction(myNewNumber: Int) {
 
 
 ## Day 3 
+
+1. array
+<img src="image3.png" height="200" />
+
+
 
 ## Day 4 

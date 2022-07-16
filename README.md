@@ -38,7 +38,7 @@ import JacobTucker from 0x03
 pub fun main()  {
     log(JacobTucker.is)
 }
----------------------
+```
 <img src="image1.png" height="200" />
 
 
@@ -82,9 +82,3 @@ transaction(myNewNumber: Int) {
 ## Day 3 
 
 ## Day 4 
-
-
-
-```cadence
-
-```

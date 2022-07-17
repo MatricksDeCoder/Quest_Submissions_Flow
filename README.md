@@ -39,7 +39,7 @@ pub fun main()  {
     log(JacobTucker.is)
 }
 ```
-<img src="image1.png" height="200" />
+<img src="image1.png" height="250" />
 
 ## Day 2 
 
@@ -75,18 +75,19 @@ transaction(myNewNumber: Int) {
     }
 }
 ```
-<img src="image2.png" height="200" />
+<img src="image2.png" height="250" />
 
 
 ## Day 3 
 
 1. array
-<img src="image3.png" height="200" />
+<img src="image3.png" height="250" />
 
 2.
-<img src="image4.png" height="200" />
+<img src="image4.png" height="250" />
 
-3. 
+3. It removes the optional from a type that allows it to take the value type or nil. For example reading object values returns the optional type so using ! forces it to be the type only. If nil is return program panics and stops execution. 
+<img src="image5.png" height="250" />
 
 
 ## Day 4 

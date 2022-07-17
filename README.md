@@ -89,5 +89,6 @@ transaction(myNewNumber: Int) {
 3. It removes the optional from a type that allows it to take the value type or nil. For example reading object values returns the optional type so using ! forces it to be the type only. If nil is return program panics and stops execution. 
 <img src="image5.png" height="250" />
 
-
-## Day 4 
+4. It implies the return type which is optional String is not what is stated as return which is String type. We can fix it by unwrapping or returning Optional String
+<img src="image6.png" height="250" />
+<img src="image7.png" height="250" />

@@ -93,7 +93,7 @@ transaction(myNewNumber: Int) {
 <img src="image6.png" height="250" />
 <img src="image7.png" height="250" />
 
-## Day 3 
+## Day 4 
 
 ```
 pub contract BankAccount {

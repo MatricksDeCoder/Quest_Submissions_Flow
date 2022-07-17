@@ -92,3 +92,40 @@ transaction(myNewNumber: Int) {
 4. It implies the return type which is optional String is not what is stated as return which is String type. We can fix it by unwrapping or returning Optional String
 <img src="image6.png" height="250" />
 <img src="image7.png" height="250" />
+
+## Day 3 
+
+```
+pub contract BankAccount {
+
+    pub var profiles: {Address: AccountProfile}
+    
+    pub struct AccountProfile {
+        pub let fullName: String
+        pub let birthday: String
+        pub let type: String
+        pub let amount: Int
+        pub let account: Address
+
+        init(_fullName: String, _birthday: String,_type: String, _account: Address) {
+            self.fullName = _fullName
+            self.birthday = _birthday
+            self.type = _type
+            self.amount = 0
+            self.account = _account
+        }
+    }
+
+    pub fun addProfile(fullName: String, birthday: String, type: String, account: Address) {
+        let newAccountProfile = AccountProfile(_fullName: fullName, _birthday: birthday, _type: type, _account: account)
+        self.profiles[account] = newAccountProfile
+    }
+
+    init() {
+        self.profiles = {}
+    }
+
+}
+```
+<img src="image8.png" height="250" />
+<img src="image9.png" height="250" />

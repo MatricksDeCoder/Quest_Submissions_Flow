@@ -407,3 +407,49 @@ Scope and accesses
 5. publicFunc => Access [Area1 Area2, Area3, Area4]
 6. contractFunc  => [Area1, Area2, Area3]
 7. privateFunc => [Area1]
+
+# Chapter 4
+
+## Day 1 
+
+1. Explain what lives inside of an account.
+- Contract code(account can store multiple contracts) + Storage (/storage/PATH_NAME, public/PATH_NAME, private/PATH_NAME)stores data 
+
+2. What is the difference between the /storage/, /public/, and /private/ paths?
+/storage/ - is where data in account is first placed, it is only accessble by the account owner
+/public/ - is where account owner exposes data to the public 
+/private/ - is storage where owner grants access to some so is most restrictive access storage
+
+3. What does .save() do? What does .load() do? What does .borrow() do?
+.save() - stores data in account storage so takes parameters(data, storage/PATH_NAME)
+.load() - retrieves and takes out data from account storage takes parameter(from: storage/PATH_NAME)
+.borrow() - allows looking at data without taking it out from storage by making use of references it takes parameter(from: STORAGE_PATH)
+
+4. Explain why we couldn't save something to our account storage inside of a script.
+Inside a script we dont have access to the AuthAccount which is that part of your account that signs and is used to access data in your storage. AuthAccount is only exposed in the prepare(signer: AuthAccount) {} part of a transaction
+
+5. Explain why I couldn't save something to your account.
+As you would not have AuthAccount access to anothers account. Storage is only accessed via AuthAccount.
+
+6. Define a contract that returns a resource that has at least 1 field in it. Then, write 2 transactions:
+A transaction that first saves the resource to account storage, then loads it out of account storage, logs a field inside the resource, and destroys it.
+A transaction that first saves the resource to account storage, then borrows a reference to it, and logs a field inside the resource.
+
+Contract
+```
+
+```
+Transaction 1
+```
+
+```
+Transaction 2
+```
+
+```
+
+## Day 2
+
+## Day 3
+
+## Day 4

@@ -384,6 +384,26 @@ pub contract Stuff {
 ## Day 5
 
 Access Control 
-<img src="image11.png" height="250" />
+<img src="image11.png" height="300" />
 
-1. 
+-- Ordered Least Restrictive to Most Restritive --
+pub(set) => [Write Scope - All Scope] + [Read Scope - All Scope]
+
+access(all) => [Write Scope - Current & Inner] + [Read Scope - All Scope]
+pub => [Write Scope Current & Inner] + [Read Scope - All Scope]
+
+access(account) => [Write Scope - Current & Inner] + [Read Scope - All Contracts in the Account]
+access(contract) => [Write Scope - Current & Inner] + [Read Scope - Containing Contract]
+
+access(self) => [Write Scope - Current & Inner] + [Read Scope - Current & Inner]
+priv => [Write Scope - Current & Inner] + [Read Scope - Current & Inner]
+
+1. Scope and accesses
+Variable a => [Write Scope - Area 1, Area2, Area3, Area4] + [Read Scope - Area 1, Area2, Area3, Area4]
+Variable b => [Write Scope - Area1] + [Read Scope - Area 1, Area2, Area3, Area4]
+Variable c => [Write Scope - Area1] + [Read Scope - Area 1, Area2, Area3]
+Variable d => [Write Scope - Area1] + [Read Scope - Area1]
+
+publicFunc => Access [Area1 Area2, Area3, Area4]
+contractFunc  => [Area1, Area2, Area3]
+privateFunc => [Area1]

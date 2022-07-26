@@ -129,3 +129,175 @@ pub contract BankAccount {
 ```
 <img src="image8.png" height="250" />
 <img src="image9.png" height="250" />
+
+# Chapter 3
+
+## Day 1
+
+List 3 reasons why structs are different from resources.
+1. (a) Structs can be copied easily whereas resources can't be copied need to be moved around
+   (b) Structs can be created inside and outside contracts whereas resources can only be created inside contracts
+   (c) Structs can be handled anyhow can be lost, overwritten easily destroyed whereas resources are a bit more complex to deal with and must be handled explicitly 
+   
+Describe a situation where a resource might be better to use than a struct.
+2. When dealing with something that requires more complex access control is unique must not be easily copied or lost. This can be well suited to NFT's Non Fungile Tokens.
+
+3. Keword to create new resources = create
+
+4. Resources can only be created in a contract and never in a script or transaction
+
+5 @Jacob type of resource
+
+6. Fixed contract below
+```
+pub contract Test {
+
+    // Hint: There's nothing wrong here ;)
+    pub resource Jacob {
+        pub let rocks: Bool
+        init() {
+            self.rocks = true
+        }
+    }
+
+    pub fun createJacob(): @Jacob { // @ specifies resources
+        let myJacob <- create Jacob() // resources are explicitly created and moved around
+        return <- myJacob // resources explicity moved 
+    }
+}
+```
+
+## Day 2
+
+Places can store resources - contract variable, dictionary, array, another resource 
+
+1. Contract with array and dictionary of resources 
+```
+pub contract TokensContract {
+ 
+   pub var arrayOfTokens: @[Token]
+   pub var dictionaryOfTokens: @{String: Token}
+ 
+   pub var sizeArray: Int
+   pub var sizeDict: Int
+ 
+   pub resource Token {
+       pub let name: String
+       init(name: String) {
+           self.name = name
+       }
+   }
+ 
+   pub fun addTokenArray(token: @Token): Bool {
+       self.arrayOfTokens.append(<- token)
+       self.sizeArray= self.sizeArray + 1
+       return true
+   }
+ 
+   pub fun removeTokenArray(index: Int): @Token {
+       pre { index >= 0 && index < self.sizeArray}
+       self.sizeArray= self.sizeArray - 1
+       return <- self.arrayOfTokens.remove(at: index)
+   }
+ 
+   pub fun addTokenDictionary(token: @Token) : Bool {
+       var key: String = token.name
+       // var key: Uint64 = token.uuid. -> can use more unique key than ame, however this is for example purposes only 
+       self.dictionaryOfTokens[key] <-! token // Force move - panic if there is already another resource
+       /*
+       option to handle where there is a value already
+       option to use double move
+       let oldToken <- self.dictionaryOfTokens[key] <- token
+       destroy oldToken
+       */
+       self.sizeDict= self.sizeDict + 1
+       return true
+   }
+ 
+   pub fun removeTokenDictionaryReturnToken(key: String) : @Token {
+       self.sizeDict= self.sizeDict - 1
+       let token: @Token <- self.dictionaryOfTokens.remove(key: key) ?? panic("Could not find token!")
+       return <- token
+   }
+ 
+   pub fun removeTokenDictionaryReturnBool(key:String) : Bool {
+       let removed: @Token <- self.dictionaryOfTokens.remove(key:key)?? panic("Could not find token!")
+       self.sizeDict= self.sizeDict - 1
+       destroy removed
+       return true
+   }
+ 
+   init() {
+       self.arrayOfTokens <- []
+       self.dictionaryOfTokens <- {}
+       self.sizeArray = 0
+       self.sizeDict = 0
+   }
+ 
+}
+
+```
+
+## Day 3
+
+1. Define your own contract that stores a dictionary of resources. Add a function to get a reference to one of the resources in the dictionary.
+```
+pub contract ContractStudentResources {
+
+    pub var dictionaryOfStudents: @{UInt64: Student}
+
+    pub resource Student {
+        pub var firstname: String
+        pub var surname: String
+        pub var course: String
+        pub var age: UInt64
+
+        init(firstname: String, surname: String, course: String, age: UInt64) {
+            self.firstname = firstname
+            self.surname = surname
+            self.course = course
+            self.age = age
+        }
+    }
+
+    pub fun addStudent(firstname: String, surname: String, course: String, age: UInt64) : UInt64 {
+        let student <- create Student(firstname:firstname, surname:surname, course:course, age:age)
+        let id = student.uuid
+        self.dictionaryOfStudents[id] <-! student
+        return id
+    }
+
+    pub fun getStudent(id: UInt64): &Student? {
+        return &self.dictionaryOfStudents[id] as &Student?
+        // unwrap optional reference ==> return (&self.dictionaryOfStudents[key] as &Greeting?)! 
+    }
+
+    init() {
+        self.dictionaryOfStudents <- {}
+    }
+}
+```
+
+2. Create a script that reads information from that resource using the reference from the function you defined in part 1
+```
+import ContractStudentResources from 0x01
+
+pub fun main(): [AnyStruct] {
+  let studentId: UInt64 = ContractStudentResources.addStudent("John","James", "Cadence",5)
+  let student: &ContractStudentResources.Student = ContractStudentResources.getStudent(studentId)
+  return [student.firstname, student.surname, student.course, student.age]
+}
+```
+
+3. Explain, in your own words, why references can be useful in Cadence.
+References help reduce the complexity associated with handling resources as we can work with them using references without having to move them around. 
+
+## Day 4
+
+1. 
+
+## Day 5
+
+Access Control 
+
+1. 

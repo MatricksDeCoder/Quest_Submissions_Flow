@@ -294,10 +294,96 @@ References help reduce the complexity associated with handling resources as we c
 
 ## Day 4
 
-1. 
+1. Use resource interface
+(a) To define how a resource must be implemented (b) To restrict access
+
+2.Define your own contract. Make your own resource interface and a resource that implements the interface. Create 2 functions. In the 1st function, show an example of not restricting the type of the resource and accessing its content. In the 2nd function, show an example of restricting the type of the resource and NOT being able to access its content.
+```
+pub contract HelloWorld {
+
+    pub resource interface IGreeting {
+      pub var greeting: String
+      pub var version: Int
+    }
+
+    pub resource Greeting: IGreeting {
+      pub var greeting: String
+      pub var version: Int
+
+      pub fun updateGreeting(newGreeting: String): Int {
+        self.greeting = newGreeting
+        self.version = self.version + 1
+        return self.version  // returns the new version
+      }
+
+      init() {
+        self.greeting = "Hello World"
+        self.version = 1
+      }
+    }
+
+    pub fun noInterface() {
+      let _greeting: @Greeting <- create Greeting()
+      log(_greeting.greeting) // Should be "Hello World"
+      log(_greeting.version) // 1
+      var result = _greeting.updateGreeting(newGreeting: "Already Said Hello")
+      log(_greeting.greeting) // Should be "Already Said Hello"
+      log(result) // Should be 2
+      destroy _greeting
+    }
+
+    pub fun yesInterface() {
+      let _greeting: @Greeting{IGreeting} <- create Greeting()
+      log(_greeting.greeting) // Should be "Hello World"
+      log(_greeting.version) // Should be 1
+      var result = _greeting.updateGreeting(newGreeting: "Already Said Hello") 
+      log(_greeting.version) // Should be 1 as no change.
+      log(_greeting.greeting) // Hello World as no 
+      destroy _greeting
+    }
+
+    init() {
+    }
+}
+```
+
+3. Fixed code 
+```
+pub contract Stuff {
+
+    pub struct interface ITest {
+      pub var greeting: String
+      pub var favouriteFruit: String
+      pub fun changeGreeting(newGreeting:String): String // added to interface to fixe error
+    }
+
+    // `structure Stuff.Test does not conform 
+    // to structure interface Stuff.ITest`
+    pub struct Test: ITest {
+      pub var greeting: String
+      pub var favouriteFruit: String
+      pub fun changeGreeting(newGreeting: String): String {
+        self.greeting = newGreeting
+        return self.greeting // returns the new greeting
+      }
+
+      init() {
+        self.greeting = "Hello!"
+        self.favouriteFruit = "Fruit"
+      }
+    }
+
+    pub fun fixThis() {
+      let test: Test{ITest} = Test()
+      let newGreeting = test.changeGreeting(newGreeting: "Bonjour!") // ERROR HERE: `member of restricted type is not accessible: changeGreeting`
+      log(newGreeting)
+    }
+}
+```
 
 ## Day 5
 
 Access Control 
+<img src="image9.png" height="250" />
 
 1. 

@@ -28,7 +28,7 @@ access(all) contract JacobTucker {
 
   // The init() function is required if the contract contains any fields.
   init() {
-      self.is = "the best"
+      self.is =  "the best"
   }
   
 }

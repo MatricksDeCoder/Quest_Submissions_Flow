@@ -437,18 +437,80 @@ A transaction that first saves the resource to account storage, then borrows a r
 
 Contract
 ```
+pub contract ReturnResource {
+
+    pub resource Resource {
+
+      pub var oneResource: Int
+
+      init() {
+        self.oneResource = 1
+      }
+
+    }
+
+    pub fun createResource(): @Resource {
+        return <- create Resource()
+    }
+
+    init() {
+    }
+
+}
 
 ```
 Transaction 1
 ```
+import ReturnResource from 0x03
+
+transaction {
+
+  prepare(acct: AuthAccount) {
+    //store Resource in storage
+    acct.save(<-ReturnResource.createResource(),to: /storage/Resource)
+    let resource: @ReturnResource.Resource <- 
+    acct.load<@ReturnResource.Resource>(from: /storage/Resource) ??
+    panic("No resource found at that location")
+    log(resource.oneResource)
+    destroy resource
+  }
+
+  execute {
+    log("Stored Resource in Storage")
+    log("Loaded Resource from Storage")
+    log("Read resource field")
+    log("Destroyed resource")
+  }
+}
 
 ```
 Transaction 2
 ```
+import ReturnResource from 0x03
+
+transaction {
+
+  prepare(acct: AuthAccount) {
+    //store Resource in storage
+    acct.save(<-ReturnResource.createResource(),to: /storage/Resource)
+    let resource: &ReturnResource.Resource = 
+    acct.borrow<&ReturnResource.Resource>(from: /storage/Resource) ??
+    panic("No resource found at that location")
+    log(resource.oneResource)
+  }
+
+  execute {
+    log("Stored Resource in Storage")
+    log("Borrowed Reference Resource from Storage")
+    log("Read resource field from reference")
+  }
+}
 
 ```
 
 ## Day 2
+
+1. 
 
 ## Day 3
 

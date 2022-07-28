@@ -532,7 +532,7 @@ pub fun main(address: Address): String {
 ```
 //.borrow() does not need to specify type as the capability already has type
 // Restrict with resource interface => signer.link<&Stuff.Test{Stuff.ITest}>(/public/MyTestResource, target: /storage/MyTestResource)
-
+// let account: PublicAccount = getAccount(0x1) -> `account` now holds the PublicAccount of address 0x1
 
 1. .link() -> allows us to expose data or resource in storage of our account publicly or privately 
 
@@ -540,18 +540,86 @@ pub fun main(address: Address): String {
 
 3. Deploy a contract that contains a resource that implements a resource interface. Then, do the following:
 ```
+pub contract ReturnResource {
+
+    pub resource interface IResource {
+      pub var oneResource: Int
+    }
+
+    pub resource Resource: IResource {
+
+      pub var oneResource: Int
+      pub var oneOwner: String
+
+      pub fun changeOneResource() {
+        self.oneResource = 2
+      }
+
+      init() {
+        self.oneResource = 1
+        self.oneOwner = "You wont know"
+      }
+
+    }
+
+    pub fun createResource(): @Resource {
+        return <- create Resource()
+    }
+
+    init() {
+    }
+
+}
 ```
 
 In a transaction, save the resource to storage and link it to the public with the restrictive interface.
 ```
+import ReturnResource from 0x03
+
+transaction {
+
+  prepare(acct: AuthAccount) {
+    //store Resource in storage
+    acct.save(<-ReturnResource.createResource(),to: /storage/Resource)
+    acct.link<&ReturnResource.Resource{ReturnResource.IResource}>
+    (/public/Resource, target: /storage/Resource)
+  }
+
+  execute {
+    log("Stored Resource in Storage")
+    log("Linked Resource with Restrictive Interface")
+  }
+}
 ```
 
-Run a script that tries to access a non-exposed field in the resource interface, and see the error pop up.
 ```
+import ReturnResource from 0x03
+
+pub fun main(address: Address) {
+
+    // get account capability 
+    let capabilityPublic: Capability<&ReturnResource.Resource{ReturnResource.IResource}> 
+    = getAccount(address).getCapability<&ReturnResource.Resource{ReturnResource.IResource}>
+    (/public/Resource)
+
+    // log(capabilityPublic) <- Capability
+    
+    let resourceRef: &ReturnResource.Resource{ReturnResource.IResource} = capabilityPublic.borrow()
+     ?? panic("The capability doesn't exist or you did not specify the right type when you got the capability.")
+    
+    // log(resourceRef) <- StorageReference()
+
+     //resourceRef.changeOneResource()
+     //log(resourceRef.oneOwner)
+     log(resourceRef.oneResource)
+
+}
 ```
+Run a script that tries to access a non-exposed field in the resource interface, and see the error pop up
+<img src="image13.png" height="250" />
 Run the script and access something you CAN read from. Return it from the script.
-```
-```
+<img src="image14.png" height="250" />
+
 
 ## Day 3
 

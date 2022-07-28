@@ -623,4 +623,12 @@ Run the script and access something you CAN read from. Return it from the script
 
 ## Day 3
 
+1. Why did we add a Collection to this contract? List the two main reasons 
+    1. To make it easier to manage various NFT’s from single storage path
+    2. Storage can only be accessed by owner directly, however a collection in storage can allow for anyone to deposit or give us an NFT
+2. What do you have to do if you have resources "nested" inside of another resource? ("Nested resources") - Create a destroy function
+3. Brainstorm some extra things we may want to add to this contract. Think about what might be problematic with this contract and how we could fix it.
+       - Idea #1: Do we really want everyone to be able to mint an NFT? => No as maybe we want fixed supply or control properties NFT etc so one authorised individuals. We can grant permissions or give access and or create an admin or minter role
+       -Idea #2: If we want to read information about our NFTs inside our Collection, right now we have to take it out of the Collection to do so. Is this good? => this is bad as it is resource intensive, can lead to loss of resource and is complex, we need to have a reference to resource so we can read it without taking it out. 
+
 ## Day 4

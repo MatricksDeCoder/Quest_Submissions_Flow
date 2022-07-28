@@ -510,7 +510,48 @@ transaction {
 
 ## Day 2
 
-1. 
+In the example above, we used the .link() function to "link" our resource to the /public/ path. In simpler terms, we took the thing at /storage/MyTestResource and exposed a &Stuff.Test to the public so they can read from it.
+
+Linking something to /public/ or /private/ creates a capability <- they are like pointers
+
+AuthAccount - you can do anything e.g change storage. PublicAccount - for public part account so can expose what public can read e.g via interfaces
+You can only get a capability from /private/ with a AuthAccount, whereas from /publi/ with a PublicAccount
+Example => Public
+```
+import Stuff from 0x01
+pub fun main(address: Address): String {
+  // gets the public capability that is pointing to a `&Stuff.Test` type
+  let publicCapability: Capability<&Stuff.Test> =
+    getAccount(address).getCapability<&Stuff.Test>(/public/MyTestResource)
+
+  // Borrow the `&Stuff.Test` from the public capability
+  let testResource: &Stuff.Test = publicCapability.borrow() ?? panic("The capability doesn't exist or you did not specify the right type when you got the capability.")
+
+  return testResource.name // "Jacob"
+}
+```
+//.borrow() does not need to specify type as the capability already has type
+// Restrict with resource interface => signer.link<&Stuff.Test{Stuff.ITest}>(/public/MyTestResource, target: /storage/MyTestResource)
+
+
+1. .link() -> allows us to expose data or resource in storage of our account publicly or privately 
+
+2. By Setting the type as restricted to the interface when we link our stored data, only functions and variables in the restricted interface are accessible. 
+
+3. Deploy a contract that contains a resource that implements a resource interface. Then, do the following:
+```
+```
+
+In a transaction, save the resource to storage and link it to the public with the restrictive interface.
+```
+```
+
+Run a script that tries to access a non-exposed field in the resource interface, and see the error pop up.
+```
+```
+Run the script and access something you CAN read from. Return it from the script.
+```
+```
 
 ## Day 3
 

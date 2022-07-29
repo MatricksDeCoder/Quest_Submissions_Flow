@@ -634,3 +634,148 @@ Run the script and access something you CAN read from. Return it from the script
   Idea #2: If we want to read information about our NFTs inside our Collection, right now we have to take it out of the Collection to do so. Is this good? => this is bad as it is resource intensive, can lead to loss of resource and is complex, we need to have a reference to resource so we can read it without taking it out. 
 
 ## Day 4
+
+Commented Example CryptoPoops Code 
+```
+/*
+
+Example simple NFT collection contract
+
+*/
+
+pub contract CryptoPoops {
+
+  // keeps track total supply minted CryptoPoos
+  pub var totalSupply: UInt64
+
+  // This is an NFT resource that contains an id, name, favouriteFood, and luckyNumber
+  pub resource NFT {
+    
+    // unique id of each NFT in this case uuid automatically given
+    pub let id: UInt64
+    
+    // name property of NFT
+    pub let name: String
+    // favoritFoof property of NFT
+    pub let favouriteFood: String
+    // lucky number property of NFT
+    pub let luckyNumber: Int
+     
+    // required initializer function akin to constructor to initialize resource variables with init inputs
+    init(_name: String, _favouriteFood: String, _luckyNumber: Int) {
+      // set id property to unique id
+      self.id = self.uuid
+      // set name property 
+      self.name = _name
+      // set favorite food property
+      self.favouriteFood = _favouriteFood
+      // set lucky number property 
+      self.luckyNumber = _luckyNumber
+    }
+  }
+
+  // This is a resource interface that allows us to deposit, getIDs and borrowNFT
+  // Borrow NFT allows us to access NFT without withdrawing taking it out etc so we can read from it
+  pub resource interface CollectionPublic {
+    // expose function deposit to public
+    pub fun deposit(token: @NFT)
+    // expose getIDs to public
+    pub fun getIDs(): [UInt64]
+    // expose borrowNFt to public
+    pub fun borrowNFT(id: UInt64): &NFT
+  }
+  
+  // Resource that is a collection of minted NFTS
+  pub resource Collection: CollectionPublic {
+
+    // Dictionary to keep track of minted NFT's by id
+    pub var ownedNFTs: @{UInt64: NFT}
+    
+    // Function to deposit an NFT into collection
+    // Is also exposed by interface CollectionPublic
+    pub fun deposit(token: @NFT) {
+      self.ownedNFTs[token.id] <-! token
+    }
+    
+    // Function to withdraw an NFT from collection
+    // Is not exposed in interface CollectionPublic so cant be called by public
+    pub fun withdraw(withdrawID: UInt64): @NFT {
+      let nft <- self.ownedNFTs.remove(key: withdrawID) 
+              ?? panic("This NFT does not exist in this Collection.")
+      return <- nft
+    }
+
+    // Function to get array of NFTs owned by id
+    // Is exposed in interface CollectionPublic so can be called by public
+    pub fun getIDs(): [UInt64] {
+      // return array of keys (Array.keys)
+      return self.ownedNFTs.keys
+    }
+    
+    // Function to borrow
+    // Is exposed in interface CollectionPublic so can be called by public
+    // Borrow NFT allows us to access NFT without withdrawing taking it out etc so we can read from it
+    pub fun borrowNFT(id: UInt64): &NFT {
+      // return reference to NFT with casting as NFT as we want to deal with this type for this contract
+      return (&self.ownedNFTs[id] as &NFT?)!
+    }
+
+    // required initializer function akin to constructor to initialize resource variables 
+    init() {
+      // start with empty collection
+      self.ownedNFTs <- {}
+    }
+    
+    // Flow does not know how to destry resources within resources so need to create destroy function explicitly
+    destroy() {
+      // destroy collection resource
+      destroy self.ownedNFTs
+    }
+  }
+  
+  // we cant call create outside contract so need to start with mepty collection to store an deposit NFTs
+  pub fun createEmptyCollection(): @Collection {
+    // creates a collection
+    return <- create Collection()
+  }
+  
+  // we dont want anyone to mint NFT;s by calling createNFT so only in resource Minter
+  // create a Minter resource to create NFTs
+  pub resource Minter {
+    
+    // function to create an NFT resource taking in NFT parameters
+    pub fun createNFT(name: String, favouriteFood: String, luckyNumber: Int): @NFT {
+      return <- create NFT(_name: name, _favouriteFood: favouriteFood, _luckyNumber: luckyNumber)
+    }
+    
+    // function to create Minter
+    pub fun createMinter(): @Minter {
+      return <- create Minter()
+    }
+
+  }
+  
+  // initialize contract akin to a contructor called on creation
+  init() {
+    // keep track total supply minted NFT's with contract variable
+    self.totalSupply = 0
+    // create a capability/save Minter resource in storage so can be accessed and used to Mint tokens only by this account
+    // only deployer of this contract will be able to mint tokens 
+    self.account.save(<- create Minter(), to: /storage/Minter)
+  }
+}
+```
+
+--------------------------NOTES------------------
+Example NFTToken with NonFungibleToken standard compliance
+```
+```
+Example Transaction Minting
+```
+```
+Example Transactions Transfers
+```
+```
+Example Check NFT's for account
+```
+```

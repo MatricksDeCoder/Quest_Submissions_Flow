@@ -854,7 +854,9 @@ pub contract SimpleNFT {
 
    }
 
-   //make only e.g the owner the minter
+   
+   // Now, anyone who holds the Minter resource is able to mint NFTs
+   // e.g make the owner/deployer contract the minter
    pub resource NFTMinter {
 
         pub fun createNFT(): @SimpleNFT.NFT {
@@ -908,6 +910,7 @@ pub contract SimpleNFT {
 ```
 Example Transaction Minting
 ```
+
 ```
 Example Transactions Transfers
 ```

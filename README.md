@@ -1300,6 +1300,7 @@ pub fun main(account: Address, tokenId: UInt64) {
 }
 
 ```
+<img src="image18.png" height="250" />
 
 # Chapter 6
 

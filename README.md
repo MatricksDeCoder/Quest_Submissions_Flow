@@ -1009,7 +1009,7 @@ pub contract Test {
     // TODO
     // Tell me whether or not this function will log the updated number.
     // Also, tell me the value of `self.number` after it's run.
-    /*ANSWER ===> YES in theory post condition met of incrementing by 1 previous result, after first run = 1
+    /*ANSWER ===> NO in theory post condition not met of incrementing by 1 should be result = before(self.number) + 1
                    However there seems to be no way of creating this TestResource so we cant call function on resource 
     */
     pub fun numberThree(): Int {
@@ -1102,23 +1102,207 @@ It downcasts to a type with authorisation for another type. In the case of the N
 
 Contract
 ```
+import NonFungibleToken from 0x02
+
+pub contract CryptoPoops: NonFungibleToken {
+
+  pub var totalSupply: UInt64
+
+  pub event ContractInitialized()
+  pub event Withdraw(id: UInt64, from: Address?)
+  pub event Deposit(id: UInt64, to: Address?)
+
+  pub resource NFT: NonFungibleToken.INFT {
+    pub let id: UInt64
+    pub let name: String
+    pub let favouriteFood: String
+    pub let luckyNumber: Int
+
+    init(_name: String, _favouriteFood: String, _luckyNumber: Int) {
+      self.id = self.uuid
+      self.name = _name
+      self.favouriteFood = _favouriteFood
+      self.luckyNumber = _luckyNumber
+    }
+  }
+   
+  pub resource interface CollectionPublic {
+      pub fun borrowAuthNFT(id: UInt64): &CryptoPoops.NFT
+  }
+
+  pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic {
+
+    pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+
+    pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
+      let nft <- self.ownedNFTs.remove(key: withdrawID) 
+            ?? panic("This NFT does not exist in this Collection.")
+      emit Withdraw(id: nft.id, from: self.owner?.address)
+      return <- nft
+    }
+
+    pub fun deposit(token: @NonFungibleToken.NFT) {
+      let nft <- token as! @CryptoPoops.NFT
+      emit Deposit(id: nft.id, to: self.owner?.address)
+      self.ownedNFTs[nft.id] <-! nft
+    }
+
+    pub fun getIDs(): [UInt64] {
+      return self.ownedNFTs.keys
+    }
+
+    pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
+      return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
+    }
+
+    pub fun borrowAuthNFT(id: UInt64): &CryptoPoops.NFT {
+      let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
+      return ref as! &CryptoPoops.NFT
+    }
+
+    init() {
+      self.ownedNFTs <- {}
+    }
+
+    destroy() {
+      destroy self.ownedNFTs
+    }
+  }
+
+  pub fun createEmptyCollection(): @NonFungibleToken.Collection {
+    return <- create Collection()
+  }
+
+  pub resource Minter {
+    pub fun createNFT(name: String, favouriteFood: String, luckyNumber: Int): @CryptoPoops.NFT {
+      return <- create NFT(_name: name, _favouriteFood: favouriteFood, _luckyNumber: luckyNumber)
+    }
+
+    pub fun createMinter(): @Minter {
+      return <- create Minter()
+    }
+  }
+
+  init() {
+    self.totalSupply = 0
+    self.account.save(<- create Minter(), to: /storage/Minter)
+    emit ContractInitialized()
+  }
+}
 ```
 
-Borrow Transaction
+1. Any account can create storage for collection and public capability 
 ```
+import CryptoPoops from 0x01
+import NonFungibleToken from 0x02
+
+transaction() {
+  // account 0x02 creates empty collection
+  prepare(signer: AuthAccount) {
+
+    // create collection for CryptoPoops
+    let emptyCollection: @NonFungibleToken.Collection
+     <- CryptoPoops.createEmptyCollection()
+    log("Empty Collection Created")
+
+    // save collection to storage
+    signer.save(<- emptyCollection, to: /storage/CryptoCollection_0x02)
+    log("Saved collection to storage path!")
+
+    // create public capability for collection
+    signer.link<&CryptoPoops.Collection{CryptoPoops.CollectionPublic}>
+    (/public/CryptoCollection_0x02, target: /storage/CryptoCollection_0x02) 
+    log("Created public capability for collection")
+  }
+
+}
+
 ```
 
-Mint Transaction
+2. Deployer contract e.g 0x01 mints token and deposits to any recipient e.g 0x02
 ```
+import CryptoPoops from 0x01
+import NonFungibleToken from 0x02
+
+transaction(
+  _recipient: Address, 
+  _name: String,
+  _favoriteFood: String,
+  _luckyNumber: Int
+) {
+
+  prepare(signer: AuthAccount) {
+
+    // get minter reference
+    let nftMinterRef: &CryptoPoops.Minter
+    = signer.borrow<&CryptoPoops.Minter>(from: /storage/Minter)
+    ?? panic("Account does not have minter ref/ minting capabilities")
+    log("Retrieved minter reference for account if allowed to mint")
+  
+    // get recipient capability e.g 0x02
+    let _recipientRef: &CryptoPoops.Collection{CryptoPoops.CollectionPublic} 
+    = getAccount(_recipient).getCapability(/public/CryptoCollection)
+    .borrow<&CryptoPoops.Collection{CryptoPoops.CollectionPublic}>()
+    ?? panic("Account has no collection")
+    log("Retrieved recipient capabilit reference")
+
+    // mint a token as account with nftMinterRef
+    let _token: @CryptoPoops.NFT <- nftMinterRef.createNFT(
+      name:_name,
+      favouriteFood:_favoriteFood, 
+      luckyNumber: _luckyNumber
+    )
+    log("Token minted with id ".concat(_token.uuid.toString()))
+
+    // deposit to account 
+    _recipientRef.deposit(token: <-_token)
+    log("Token deposited to ".concat(_recipient.toString()))
+
+    // check account recipient e.g 0x02 has token 
+    var _result: [UInt64] = _recipientRef.getIDs()
+    log("Retrieved receipients collection")
+    log(_result)
+    log("Retrieved minters collection")
+    log(_result)
+    log(_result.length == 1)
+    let id: UInt64 = _result[0]
+    log(id)
+
+    // get token details
+    let _depositedToken: &CryptoPoops.NFT = _recipientRef.borrowAuthNFT(id: id)
+    log(_depositedToken.name)
+    log(_depositedToken.favouriteFood)
+    log(_depositedToken.luckyNumber)
+
+  }
+
+}
+```
+<img src="image17.png" height="250" />
+
+3. Script to read metadata NFT token with id with borrowAuthNFT
+```
+import CryptoPoops from 0x01
+import NonFungibleToken from 0x02
+
+pub fun main(account: Address, tokenId: UInt64) {
+
+  let publicRef:&CryptoPoops.Collection{CryptoPoops.CollectionPublic} 
+  = getAccount(account).getCapability(/public/CryptoCollection)
+  .borrow<&CryptoPoops.Collection{CryptoPoops.CollectionPublic}>()
+  ?? panic("No collection on this account ")
+
+  let _tokenRef: &CryptoPoops.NFT = publicRef.borrowAuthNFT(id: tokenId)
+
+  log(_tokenRef.name)
+  log(_tokenRef.luckyNumber)
+  log(_tokenRef.favouriteFood)
+}
+
 ```
 
-Traansfer Transaction
-```
-```
+# Chapter 6
 
-NT Metadata script
-```
-```
-
+## Day 1
 
 

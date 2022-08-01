@@ -929,6 +929,7 @@ pub event NFTMinted(id: UInt64)
 emit NFTMinted(id)
 
 2. Deploy a contract with an event in it, and emit the event somewhere else in the contract indicating that it happened.
+
 ```
 pub contract EmitEvent {
 
@@ -971,7 +972,7 @@ pub contract EmitEvent {
    }
 
 }
-
+```
 4. For each of the functions below (numberOne, numberTwo, numberThree), follow the instructions.
 ```
 pub contract Test {
@@ -1026,7 +1027,9 @@ pub contract Test {
 
 }
 ```
-```
+
 ## Day 2
+
+
 
 ## Day 3 

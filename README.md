@@ -1091,3 +1091,34 @@ pub contract Test {
 ```
 
 ## Day 3 
+
+1. What does "force casting" with as! do? Why is it useful in our Collection?
+It downcasts to a type with authorisation for another type. In the case of the NFT contract it ensures that the type passed in is downcast from NonFungibleToken.NFT to CryptoPoops.NFT so that we can have more access to NFT data as opposed to the NonFungibleToken.NFT limited to reading the id 
+
+2. What does auth do? When do we use it?
+
+
+3. Contract below: Take contract below and  add a function called borrowAuthNFT just like we did in the section called "The Problem" above. Then, find a way to make it publically accessible to other people so they can read our NFT's metadata. Then, run a script to display the NFTs metadata for a certain id. You will have to write all the transactions to set up the accounts, mint the NFTs, and then the scripts to read the NFT's metadata. We have done most of this in the chapters up to this point, so you can look for help there :)
+
+Contract
+```
+```
+
+Borrow Transaction
+```
+```
+
+Mint Transaction
+```
+```
+
+Traansfer Transaction
+```
+```
+
+NT Metadata script
+```
+```
+
+
+

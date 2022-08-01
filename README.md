@@ -775,154 +775,258 @@ import NonFungibleToken from 0x02
 Example NFT 
 https://github.com/onflow/flow-nft/blob/master/contracts/ExampleNFT.cdc
 */
+import NonFungibleToken from 0x02
 
-pub contract SimpleNFT {
- 
-   pub var totalSupply: UInt64
+pub contract SimpleNFT: NonFungibleToken {
 
-   // Event that is emitted when the NFT contract is initialized
-   pub event ContractInitialized()
-   // Event that is emitted when token is withdrawn 
-   // ---- If collection not in account storage, from will be nil
-   pub event Withdraw(id: UInt64, from: Address?)
-   // Event that is emitted when token id deposited into a collection
-   // ---- Takes address to which NFT was moved
-   pub event Deposit(id: UInt64, to: Address?)
-   
-   pub resource NFT: NonFungibleToken.INFT {
+    pub var totalSupply: UInt64
+    pub let CollectionStoragePath: StoragePath
+    pub let CollectionPublicPath: PublicPath
+    pub let MinterStoragePath: StoragePath
 
-       pub let id: UInt64
+    pub event ContractInitialized()
+    pub event Withdraw(id: UInt64, from: Address?)
+    pub event Deposit(id: UInt64, to: Address?)
 
-       init() {
-           SimpleNFT.totalSupply = SimpleNFT.totalSupply + (1 as UInt64)
-           self.id = SimpleNFT.totalSupply
-       }
+    pub resource NFT: NonFungibleToken.INFT {      
+        pub let id: UInt64
+        init() {
+            self.id = self.uuid
+            SimpleNFT.totalSupply = SimpleNFT.totalSupply + (1 as UInt64)
+        }
+    }
 
-   }
-
-   pub resource interface MyCollectionPublic {
+    pub resource interface CollectionPublic {
         pub fun deposit(token: @NonFungibleToken.NFT)
         pub fun getIDs(): [UInt64]
-        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT?
-        pub fun borrowEntireNFT(id: UInt64): &SimpleNFT.NFT?
-   }
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT
+        pub fun borrowEntireNFT(id: UInt64): &SimpleNFT.NFT? {
+            post {
+                (result == nil) || (result?.id == id):
+                    "Cannot borrow SimpleNFT reference: the ID of the returned reference is incorrect"
+            }
+        }
+    }
 
-   pub resource Collection : MyCollectionPublic, NonFungibleToken.CollectionPublic,NonFungibleToken.Provider, NonFungibleToken.Receiver {
+    pub resource Collection: CollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver,NonFungibleToken.CollectionPublic {
+        pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+        pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
+            let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
+            emit Withdraw(id: token.id, from: self.owner?.address)
+            return <-token
 
-       pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
+        }
+        pub fun deposit(token: @NonFungibleToken.NFT) {
+            let token <- token as! @SimpleNFT.NFT
+            let id: UInt64 = token.id
+            let oldToken <- self.ownedNFTs[id] <- token
+            emit Deposit(id: id, to: self.owner?.address)
+            destroy oldToken
+        }
 
-       pub fun deposit(token: @NonFungibleToken.NFT) {
-            emit Deposit(id: token.id,to: self.owner?.address)
-            self.ownedNFTs[token.id] <-! token // force move 
-       }
+        pub fun getIDs(): [UInt64] {
+            return self.ownedNFTs.keys
+        }
 
-       pub fun withdraw(withdrawID: UInt64) : @NonFungibleToken.NFT {
-            emit Withdraw(id: withdrawID, from: self.owner?.address)
-            // cant move nested resources with self.ownedNFTs[id] for dictionary 
-            return <- self.ownedNFTs.remove(key: withdrawID)!
-       }
-
-       // Returns a borrowed reference to an NFT in the collection
-        // so that the caller can read data and call methods from i
-         pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
+        pub fun borrowNFT(id: UInt64): &NonFungibleToken.NFT {
             return (&self.ownedNFTs[id] as &NonFungibleToken.NFT?)!
         }
  
-       // allow us to read additional fields as we add e.g name etc 
-       pub fun borrowEntireNFT(id: UInt64): &SimpleNFT.NFT? {
-           // downcasting to our token
-
-           if self.ownedNFTs[id] != nil {
-                // Create an authorized reference to allow downcasting
+        pub fun borrowEntireNFT(id: UInt64): &SimpleNFT.NFT? {
+            if self.ownedNFTs[id] != nil {
                 let ref = (&self.ownedNFTs[id] as auth &NonFungibleToken.NFT?)!
                 return ref as! &SimpleNFT.NFT
             }
             return nil
         }
 
-       pub fun getIDs(): [UInt64] {
-            return self.ownedNFTs.keys
-       }
-
-       init() {
+        init () {
             self.ownedNFTs <- {}
-       }
+        }
 
-       destroy() {
+
+        destroy() {
             destroy self.ownedNFTs
-       }
-
-   }
-
-   
-   // Now, anyone who holds the Minter resource is able to mint NFTs
-   // e.g make the owner/deployer contract the minter
-   pub resource NFTMinter {
-
-        pub fun createNFT(): @SimpleNFT.NFT {
-            return <- create NFT()
         }
+    }
 
+    pub fun createEmptyCollection(): @NonFungibleToken.Collection {
+        return <- create Collection()
+    }
+
+    pub resource NFTMinter {
+        pub fun mintNFT(recipient: &{NonFungibleToken.CollectionPublic}):
+         UInt64 {
+            let _token: @SimpleNFT.NFT <- create NFT()
+            let _id: UInt64 = _token.uuid
+            recipient.deposit(token: <- _token)
+            return  _id
+        }
         init() {
-        }
+        }   
+    }
 
-   }
-
-   pub fun createEmptyCollection(): @SimpleNFT.Collection {
-       return <- create Collection()
-   }
- 
-   init() {
-       self.totalSupply = 0
-       self.account.save(<- create NFTMinter(), to: /storage/NFTMinter)
-       emit ContractInitialized()
-   }
-
-   /*
-   init() {
-        // Initialize the total supply
-        self.totalSupply = 0
-
-        // Set the named paths
-        self.CollectionStoragePath = /storage/exampleNFTCollection
-        self.CollectionPublicPath = /public/exampleNFTCollection
-        self.MinterStoragePath = /storage/exampleNFTMinter
-
-        // Create a Collection resource and save it to storage
+    init() {
+        self.totalSupply = 0   
+        self.CollectionStoragePath = /storage/SimpleNFTCollection
+        self.CollectionPublicPath = /public/SimpleNFTCollection
+        self.MinterStoragePath = /storage/SimpleNFTMinter
         let collection <- create Collection()
         self.account.save(<-collection, to: self.CollectionStoragePath)
 
-        // create a public capability for the collection
-        self.account.link<&ExampleNFT.Collection{NonFungibleToken.CollectionPublic, ExampleNFT.ExampleNFTCollectionPublic, MetadataViews.ResolverCollection}>(
+        self.account.link<&SimpleNFT.Collection{NonFungibleToken.CollectionPublic, 
+SimpleNFT.CollectionPublic}>(
             self.CollectionPublicPath,
             target: self.CollectionStoragePath
         )
 
-        // Create a Minter resource and save it to storage
         let minter <- create NFTMinter()
         self.account.save(<-minter, to: self.MinterStoragePath)
 
         emit ContractInitialized()
     }
-   */
- 
 }
 ```
+
 Example Transaction Minting
-```
 
 ```
-Example Transactions Transfers
-```
-```
-Example Check NFT's for account
-```
-```
+// Must correct this
+import SimpleNFT from 0x01
+import NonFungibleToken from 0x02
+
+// example minting 
+transaction(recipient: Address) {
+    prepare(signer: AuthAccount) {
+
+        let minterStoragePath = SimpleNFT.MinterStoragePath
+        let collectionPublicPath = SimpleNFT.CollectionPublicPath
+
+        let minterRef: &SimpleNFT.NFTMinter 
+        = signer.borrow<&SimpleNFT.NFTMinter>(from: minterStoragePath)
+        ?? panic("No minter capablity available")
+
+        let recipientCollectionRef: &SimpleNFT.Collection{SimpleNFT.CollectionPublic}
+        = getAccount(recipient).getCapability(collectionPublicPath)
+        .borrow<&SimpleNFT.Collection{SimpleNFT.CollectionPublic}>()
+        ?? panic("Recipient does not have a collection")
+        
+        let tokenId: UInt64 = minterRef.mintNFT(recipient: recipientCollectionRef)
+        log(tokenId)
+    }
+    execute{
+        log("Minted token into recipient account")
+    }
+}
 ------------------------------------------------------------------------------------------------------------------------------------------------------
 # Chapter 5 
 
 ## Day 1
 
+1. Describe what an event is, and why it might be useful to a client.
+Are logs that allow the smart contract to report offchain e.g 
+pub event NFTMinted(id: UInt64) 
+emit NFTMinted(id)
+
+2. Deploy a contract with an event in it, and emit the event somewhere else in the contract indicating that it happened.
+```
+pub contract EmitEvent {
+
+   pub var hello: String
+   pub event HelloInitialized(greeting: String)
+
+   init() {
+      let _hello: String = "Hello World"
+      self.hello = _hello
+      emit HelloInitialized(greeting: _hello)
+   }
+   
+}
+```
+
+3. Using the contract in step 2), add some pre conditions and post conditions to your contract to get used to writing them out.
+```
+pub contract EmitEvent {
+
+   pub var hello: String
+   pub event HelloInitialized(greeting: String)
+   pub event HelloReset(_ oldGreeting: String, _ newGreeting:String)
+
+   pub fun setHello(newGreeting: String) {
+      pre { 
+        self.hello != newGreeting: "different greeting required"
+      }
+      post {
+        self.hello != "" : "no greeting added"
+      }
+      let oldGreeting = self.hello
+      self.hello = newGreeting  
+      emit HelloReset(oldGreeting, newGreeting)
+   }
+
+   init() {
+      let _hello: String = "Hello World"
+      self.hello = _hello
+      emit HelloInitialized(greeting: _hello)
+   }
+
+}
+
+4. For each of the functions below (numberOne, numberTwo, numberThree), follow the instructions.
+```
+pub contract Test {
+
+  // TODO
+  // Tell me whether or not this function will log the name.
+  // name: 'Jacob'
+  // ANSWER ==> YES as it satisfies pre condition for length of 5
+  pub fun numberOne(name: String) {
+    pre {
+      name.length == 5: "This name is not cool enough."
+    }
+    log(name)
+  }
+
+  // TODO
+  // Tell me whether or not this function will return a value.
+  // name: 'Jacob'
+  // ANSWER ==> YES as "Jacob" satisfies length greater than zero and after concat satifies post condition "Jacob Tucker"
+  pub fun numberTwo(name: String): String {
+    pre {
+      name.length >= 0: "You must input a valid name."
+    }
+    post {
+      result == "Jacob Tucker"
+    }
+    return name.concat(" Tucker")
+  }
+
+  pub resource TestResource {
+    pub var number: Int
+
+    // TODO
+    // Tell me whether or not this function will log the updated number.
+    // Also, tell me the value of `self.number` after it's run.
+    /*ANSWER ===> YES in theory post condition met of incrementing by 1 previous result, after first run = 1
+                   However there seems to be no way of creating this TestResource so we cant call function on resource 
+    */
+    pub fun numberThree(): Int {
+      post {
+        before(self.number) == result + 1
+      }
+      self.number = self.number + 1
+      return self.number
+    }
+
+    init() {
+      self.number = 0
+    }
+
+  }
+
+}
+```
+```
 ## Day 2
 
 ## Day 3 

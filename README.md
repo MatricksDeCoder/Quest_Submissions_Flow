@@ -1030,6 +1030,63 @@ pub contract Test {
 
 ## Day 2
 
+1. Explain why standards can be beneficial to the Flow ecosystem.
+Standard ot only bring about clarity in code and ability for easier interpretation and standardization but allows a common interface that helps with interoperability, common usage of contracts in simple way that does not require e.g callign different methods etc 
 
+2. What is YOUR favourite food?
+Flying Termites
+
+3. Fixed Code 
+```
+pub contract interface ITest {
+  pub var number: Int
+  
+  pub fun updateNumber(newNumber: Int) {
+    pre {
+      newNumber >= 0: "We don't like negative numbers for some reason. We're mean."
+    }
+    post {
+      self.number == newNumber: "Didn't update the number to be the new number."
+    }
+  }
+
+  pub resource interface IStuff {
+    pub var favouriteActivity: String
+  }
+
+  pub resource Stuff {
+    pub var favouriteActivity: String
+  }
+}
+
+//The implementing contract:
+
+pub contract Test {
+  pub var number: Int
+  
+  pub fun updateNumber(newNumber: Int) {
+    // number needs to change to new number
+    self.number = newNumber
+  }
+  /*
+  // no need to specify resource interface already specified in contract interface 
+  pub resource interface IStuff {
+    pub var favouriteActivity: String
+  }
+  */
+
+  pub resource Stuff: ITest.IStuff {
+    pub var favouriteActivity: String
+
+    init() {
+      self.favouriteActivity = "Playing League of Legends."
+    }
+  }
+
+  init() {
+    self.number = 0
+  }
+}
+```
 
 ## Day 3 

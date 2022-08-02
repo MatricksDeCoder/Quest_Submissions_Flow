@@ -1096,7 +1096,7 @@ pub contract Test {
 It downcasts to a type with authorisation for another type. In the case of the NFT contract it ensures that the type passed in is downcast from NonFungibleToken.NFT to CryptoPoops.NFT so that we can have more access to NFT data as opposed to the NonFungibleToken.NFT limited to reading the id 
 
 2. What does auth do? When do we use it?
-
+auth allows us to downcast references by granting us an authorized reference to a type that we can then downcast to another type using as!
 
 3. Contract below: Take contract below and  add a function called borrowAuthNFT just like we did in the section called "The Problem" above. Then, find a way to make it publically accessible to other people so they can read our NFT's metadata. Then, run a script to display the NFTs metadata for a certain id. You will have to write all the transactions to set up the accounts, mint the NFTs, and then the scripts to read the NFT's metadata. We have done most of this in the chapters up to this point, so you can look for help there :)
 
@@ -1210,7 +1210,7 @@ transaction() {
     log("Saved collection to storage path!")
 
     // create public capability for collection
-    signer.link<&CryptoPoops.Collection{CryptoPoops.CollectionPublic}>
+    signer.link<&CryptoPoops.Collection{NonFungibleToken.CollectionPublic,CryptoPoops.CollectionPublic}>
     (/public/CryptoCollection_0x02, target: /storage/CryptoCollection_0x02) 
     log("Created public capability for collection")
   }
@@ -1240,9 +1240,9 @@ transaction(
     log("Retrieved minter reference for account if allowed to mint")
   
     // get recipient capability e.g 0x02
-    let _recipientRef: &CryptoPoops.Collection{CryptoPoops.CollectionPublic} 
+    let _recipientRef: &CryptoPoops.Collection{NonFungibleToken.CollectionPublic,CryptoPoops.CollectionPublic} 
     = getAccount(_recipient).getCapability(/public/CryptoCollection)
-    .borrow<&CryptoPoops.Collection{CryptoPoops.CollectionPublic}>()
+    .borrow<&CryptoPoops.Collection{NonFungibleToken.CollectionPublic,CryptoPoops.CollectionPublic}>()
     ?? panic("Account has no collection")
     log("Retrieved recipient capabilit reference")
 

@@ -1305,5 +1305,16 @@ pub fun main(account: Address, tokenId: UInt64) {
 # Chapter 6
 
 ## Day 1
+<img src="image19.png" height="250" />
+<img src="image20.png" height="250" />
+<img src="image21.png" height="250" />
+<img src="image22.png" height="250" />
+
+URL = https://flow-view-source.com/testnet/account/0x9f43dc61c1627cb1
+
+## Day 2
+
+## Day 3
+
 
 

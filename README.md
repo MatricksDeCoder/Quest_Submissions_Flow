@@ -1313,7 +1313,7 @@ pub fun main(account: Address, tokenId: UInt64) {
 URL = https://flow-view-source.com/testnet/account/0x9f43dc61c1627cb1
 
 ## Day 2
-<img src="image25.png" height="250" />
+<img src="image25.png" height="300" />
 
 
 ## Day 3
